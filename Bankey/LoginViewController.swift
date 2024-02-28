@@ -7,11 +7,23 @@
 
 import UIKit
 
+protocol LogoutDelegate: AnyObject {
+    func didLogout()
+}
+
+protocol LoginViewControllerDelegate: AnyObject {
+    func didLogin()
+}
+
 class LoginViewController: UIViewController {
 
     let loginView = LoginView()
     let singInButton = UIButton(type: .system)
     let errorMessageLabel = UILabel()
+    let bankeyLabel = UILabel()
+    let titleLabel = UILabel()
+    
+    weak var delegate: LoginViewControllerDelegate?
     
     var username: String? {
         return loginView.usermameTextField.text
@@ -26,7 +38,12 @@ class LoginViewController: UIViewController {
         style()
         layout()
     }
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        singInButton.configuration?.showsActivityIndicator = false
+    }
 }
+
 extension LoginViewController {
     private func style() {
         loginView.translatesAutoresizingMaskIntoConstraints = false
@@ -42,11 +59,26 @@ extension LoginViewController {
         errorMessageLabel.textColor = .systemRed
         errorMessageLabel.numberOfLines = 0
         errorMessageLabel.isHidden = true
+        
+        bankeyLabel.translatesAutoresizingMaskIntoConstraints = false
+        bankeyLabel.text = "Bankey"
+        bankeyLabel.textAlignment = .center
+        bankeyLabel.textColor = .black
+        bankeyLabel.font = UIFont.systemFont(ofSize: 25, weight: .semibold)
+        
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.text = "Your premium source for all things banking!"
+        titleLabel.textColor = .black
+        titleLabel.numberOfLines = 2
+        titleLabel.font = UIFont.systemFont(ofSize: 20)
+        titleLabel.textAlignment = .center
     }
     private func layout() {
         view.addSubview(loginView)
         view.addSubview(singInButton)
         view.addSubview(errorMessageLabel)
+        view.addSubview(titleLabel)
+        view.addSubview(bankeyLabel)
         
         // LoginView
         NSLayoutConstraint.activate([
@@ -69,6 +101,20 @@ extension LoginViewController {
             errorMessageLabel.trailingAnchor.constraint(equalTo: loginView.trailingAnchor)
         ])
         
+        // Title Label
+        NSLayoutConstraint.activate([
+            titleLabel.bottomAnchor.constraint(equalTo: loginView.topAnchor, constant: -20),
+            titleLabel.leadingAnchor.constraint(equalTo: loginView.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: loginView.trailingAnchor)
+        ])
+        
+        // Bankey Label
+        NSLayoutConstraint.activate([
+            bankeyLabel.bottomAnchor.constraint(equalTo: titleLabel.topAnchor, constant: -10),
+            bankeyLabel.leadingAnchor.constraint(equalTo: loginView.leadingAnchor),
+            bankeyLabel.trailingAnchor.constraint(equalTo: loginView.trailingAnchor)
+        ])
+        
     }
 }
 // MARK: Action
@@ -84,11 +130,12 @@ extension LoginViewController {
             assertionFailure("Username / password should never be nil")
             return
         }
-        if username.isEmpty || password.isEmpty {
-            configureView(withMessage: "Username / password cannot be blank ")
-        }
-        if username == "Idevfan" && password == "12345678" {
+//        if username.isEmpty || password.isEmpty {
+//            configureView(withMessage: "Username / password cannot be blank ")
+//        }
+        if username == "" && password == "" {
             singInButton.configuration?.showsActivityIndicator = true
+            delegate?.didLogin()
         } else {
             configureView(withMessage: "Incorrect username / password")
         }
