@@ -8,7 +8,7 @@
 import UIKit
 import CoreData
 
-let appColor: UIColor = .systemTeal
+let appColor: UIColor = UIColor.id
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
