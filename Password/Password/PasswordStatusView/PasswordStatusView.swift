@@ -19,6 +19,8 @@ class PasswordStatusView: UIView {
     let digitCritriaView = PasswordCriteriaView(text: "digit (0-9)")
     let specialCharacterCritriaView = PasswordCriteriaView(text: "special character (e.g. !@#$%^)")
     
+    var shouldResetCriteria: Bool = true
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -88,5 +90,56 @@ extension PasswordStatusView {
         attrText.append(NSAttributedString(string: "criteria when setting your password:", attributes: plainTextAttributes))
         
         return attrText
+    }
+}
+//  MARK: Action
+extension PasswordStatusView {
+    func updateDisplay(_ text: String) {
+        let lengthAndNoSpaceNet = PasswordCriteria.lengthAndNoSpaceMet(text)
+        let uppercaseMet = PasswordCriteria.uppercaseMet(text)
+        let lowercaseMet = PasswordCriteria.lowercaseMet(text)
+        let digitMet = PasswordCriteria.digitMet(text)
+        let specialCharacterMet = PasswordCriteria.specialCharacterMet(text)
+        
+        if shouldResetCriteria {
+          // Inline valiation (✅ or ❌)
+            lengthAndNoSpaceNet ? lengthCriteriaView.isCriteriaMet = true : lengthCriteriaView.reset()
+            uppercaseMet ? uppercaseCritriaView.isCriteriaMet = true : uppercaseCritriaView.reset()
+            lowercaseMet ? lowercaseCritriaView.isCriteriaMet = true : lowercaseCritriaView.reset()
+            digitMet ? digitCritriaView.isCriteriaMet = true : digitCritriaView.reset()
+            specialCharacterMet ? specialCharacterCritriaView.isCriteriaMet = true : specialCharacterCritriaView.reset()
+        } else {
+            lengthCriteriaView.isCriteriaMet = lengthAndNoSpaceNet
+            uppercaseCritriaView.isCriteriaMet = uppercaseMet
+            lowercaseCritriaView.isCriteriaMet = lowercaseMet
+            digitCritriaView.isCriteriaMet = digitMet
+            specialCharacterCritriaView.isCriteriaMet = specialCharacterMet
+        }
+    }
+    func validate(_ text: String) -> Bool {
+        let uppercaseMet = PasswordCriteria.uppercaseMet(text)
+        let lowercaseMet = PasswordCriteria.lowercaseMet(text)
+        let digitMet = PasswordCriteria.digitMet(text)
+        let specialCharacterMet = PasswordCriteria.specialCharacterMet(text)
+
+        // Ready Player1 🕹
+        // Check for 3 of 4 criteria here...
+        let checkable = [uppercaseMet, lowercaseMet, digitMet, specialCharacterMet]
+        let metCriteria = checkable.filter { $0 }
+        let lengthAndNoSpaceMet = PasswordCriteria.lengthAndNoSpaceMet(text)
+        
+        if lengthAndNoSpaceMet && metCriteria.count >= 3 {
+            return true
+        }
+        
+        return false
+    }
+    
+    func reset() {
+        lengthCriteriaView.reset()
+        uppercaseCritriaView.reset()
+        lowercaseCritriaView.reset()
+        digitCritriaView.reset()
+        specialCharacterCritriaView.reset()
     }
 }

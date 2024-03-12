@@ -7,14 +7,29 @@
 
 import UIKit
 
+protocol PasswordTextFieldDelegate: AnyObject {
+    func editingChanged(_ sender: PasswordTextField)
+    func editingDidEnd(_ sender: PasswordTextField)
+}
+
 class PasswordTextField: UIView {
+    
+    typealias CustomValiation = (_ textValue: String?) -> (Bool, String)?
     
     let lockImageView = UIImageView(image: UIImage(systemName: "lock.fill"))
     let textField = UITextField()
-    let placeHolderText: String
     let eyeButton = UIButton(type: .custom)
     let dividerView = UIView()
     let errorLabel = UILabel()
+    
+    let placeHolderText: String
+    var customValidation: CustomValiation?
+    weak var delegate: PasswordTextFieldDelegate?
+    
+    var text: String? {
+        get { return textField.text }
+        set { textField.text = newValue }
+    }
     
     init(placeHolderText: String) {
         self.placeHolderText = placeHolderText
@@ -42,9 +57,10 @@ extension PasswordTextField {
         textField.translatesAutoresizingMaskIntoConstraints = false
         textField.isSecureTextEntry = false
         textField.placeholder = placeHolderText
-//        textField.delegate = self
+        textField.delegate = self
         textField.keyboardType = .asciiCapable
         textField.attributedPlaceholder = NSAttributedString(string: placeHolderText, attributes: [NSAttributedString.Key.foregroundColor: UIColor.secondaryLabel])
+        textField.addTarget(self, action: #selector(textFieldEditingChanged), for: .editingChanged)
         
         eyeButton.translatesAutoresizingMaskIntoConstraints = false
         eyeButton.setImage(UIImage(systemName: "eye.circle"), for: .normal)
@@ -57,10 +73,12 @@ extension PasswordTextField {
         errorLabel.translatesAutoresizingMaskIntoConstraints = false
         errorLabel.textColor = .systemRed
         errorLabel.font = .preferredFont(forTextStyle: .footnote)
-        errorLabel.text = "Enter your password"
-        errorLabel.adjustsFontSizeToFitWidth = true
+        errorLabel.text = "Your password must meet the requirements below"
+        errorLabel.numberOfLines = 0
+        errorLabel.lineBreakMode = .byWordWrapping
+//        errorLabel.adjustsFontSizeToFitWidth = true
         errorLabel.minimumScaleFactor = 0.8
-        errorLabel.isHidden = false
+        errorLabel.isHidden = true
     }
     
     func layout() {
@@ -116,5 +134,45 @@ extension PasswordTextField {
         
         textField.isSecureTextEntry.toggle()
         eyeButton.isSelected.toggle()
+    }
+    
+    @objc func textFieldEditingChanged(_ sender: UITextField) {
+        delegate?.editingChanged(self)
+    }
+}
+// MARK: UITextField Delegate
+extension PasswordTextField: UITextFieldDelegate {
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        delegate?.editingDidEnd(self)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.endEditing(true)
+        return true
+    }
+}
+
+// MARK: Validation
+
+extension PasswordTextField {
+    
+     func validate() -> Bool {
+        if let customValidation = customValidation,
+           let customValidationResult = customValidation(text),
+            customValidationResult.0 == false {
+            showError(customValidationResult.1)
+            return false
+        }
+        clearError()
+        return true
+    }
+    
+    private func showError(_ errorMassage: String) {
+        errorLabel.isHidden = false
+        errorLabel.text = errorMassage
+    }
+    private func clearError() {
+        errorLabel.isHidden = true
+        errorLabel.text = ""
     }
 }
